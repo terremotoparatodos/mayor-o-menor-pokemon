@@ -98,11 +98,55 @@ body.clean #square::after{display:none}
    Las animaciones de entrada usan fill "backwards" para no pisar las transiciones. */
 .stage{left:0; top:262px; width:var(--sq); height:818px}
 .stage > *{position:absolute}
-.scene{left:0; top:0; width:1080px; height:818px; opacity:0; transform:scale(1.08);
-  transition:opacity .5s ease-out, transform .8s cubic-bezier(.2,.8,.2,1)}
-.stage.reveal .scene{opacity:1; transform:none}
+/* Escena 2D de la comparación (src/render/comparison.ts). Los recuadros salen de las cartas, así que el
+   contenedor sólo aparece/desaparece; el movimiento lo pone la línea de tiempo. */
+.scene{left:0; top:0; width:1080px; height:818px; opacity:0; pointer-events:none; transition:opacity .2s}
+.stage.reveal .scene{opacity:1}
 .stage.leaving .scene{opacity:0; transform:scale(.94); transition:opacity .38s ease-in, transform .42s ease-in}
 .stage.leaving .tags, .stage.leaving .said{opacity:0 !important}
+/* Al revelar, el recuadro de cada carta "se despega": el de la escena toma su lugar. */
+.stage.reveal .cards .frame{visibility:hidden}
+.scene > *{position:absolute; left:0; top:0}
+
+.cmp-box{box-sizing:border-box; border-radius:10px; padding:2.7%; transform-origin:50% 100%; will-change:transform, width, height;
+  background:linear-gradient(180deg,#24305a,#141a33); border:4px solid var(--ink);
+  box-shadow:inset 0 0 0 4px #e8e2c8, inset 0 0 0 7px var(--ink), 0 8px 0 rgba(0,0,0,.4)}
+.cmp-box img{display:block; width:100%; height:100%; image-rendering:pixelated; border-radius:4px}
+.cmp-box.a{outline:5px solid var(--gold); outline-offset:3px}
+.cmp-box.b{outline:5px solid var(--blue); outline-offset:3px}
+
+.cmp-floor{top:728px; width:1080px; height:90px; background:linear-gradient(180deg,rgba(22,22,31,.75),rgba(22,22,31,0));
+  border-top:4px solid rgba(255,255,255,.7)}
+
+/* Pared de medición (sólo altura) */
+.cmp-wall{left:24px !important; width:1032px; height:728px; border-radius:10px 10px 0 0; background:rgba(16,20,32,.62); opacity:0}
+.scene.weight .cmp-wall, .scene.weight .cmp-bar, .scene.weight .cmp-ref{display:none}
+.cmp-line{position:absolute; left:0; right:0; height:0; border-top:2px solid rgba(255,255,255,.22)}
+.cmp-line.major{border-top:3px solid rgba(255,255,255,.5)}
+.cmp-line span{position:absolute; bottom:4px; font-size:20px; color:rgba(255,255,255,.6)}
+.cmp-line.major span{color:var(--gold)}
+.cmp-line span:first-child{left:12px} .cmp-line span:last-child{right:12px}
+.cmp-bar{box-sizing:border-box; border:4px solid var(--ink); border-bottom:0; border-radius:8px 8px 0 0; opacity:0;
+  background-image:repeating-linear-gradient(180deg, rgba(0,0,0,.18) 0 3px, transparent 3px 24px);
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.18)}
+.cmp-bar.a{background-color:var(--gold)} .cmp-bar.b{background-color:var(--blue)}
+.cmp-ref{width:1032px; height:0; border-top:4px dashed var(--gold); transform-origin:0 0; opacity:0}
+.cmp-ref.b{border-top-color:var(--blue)}
+
+/* Balancín (sólo peso) */
+.cmp-beam, .cmp-fulcrum{display:none}
+.scene.weight .cmp-beam, .scene.weight .cmp-fulcrum{display:block}
+.cmp-beam{width:940px; height:22px; border-radius:8px; border:4px solid var(--ink); box-sizing:border-box; transform-origin:50% 50%;
+  background:linear-gradient(180deg,#b07a46,#7a4d27); box-shadow:0 6px 0 rgba(0,0,0,.35)}
+.cmp-fulcrum{left:480px !important; top:621px !important; width:120px; height:107px; background:var(--ink);
+  clip-path:polygon(50% 0, 100% 100%, 0 100%)}
+.cmp-fulcrum::after{content:''; position:absolute; inset:6px 10px 0; background:#5a5f78; clip-path:polygon(50% 0, 100% 100%, 0 100%)}
+
+/* Sacudón al frenarse una medición o asentarse el balancín */
+.stage.shake{animation:shake .3s}
+.stage.shake-hard{animation:shakeHard .45s}
+@keyframes shake{25%{transform:translate(-4px,2px)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,1px)}}
+@keyframes shakeHard{15%{transform:translate(-9px,4px)}30%{transform:translate(8px,-4px)}45%{transform:translate(-6px,3px)}60%{transform:translate(4px,-2px)}80%{transform:translate(-2px,1px)}}
 
 /* Inicio: elegir ALTURA o PESO */
 .modes{left:56px; right:56px; top:30px; height:730px; display:grid; grid-template-columns:1fr 1fr; gap:36px;
@@ -221,7 +265,6 @@ body.clean #square::after{display:none}
 @keyframes stampIn{0%{opacity:0; transform:translate(-50%,-50%) scale(.4) rotate(-6deg)}60%{opacity:1; transform:translate(-50%,-50%) scale(1.08) rotate(1deg)}100%{opacity:1; transform:translate(-50%,-50%) scale(1)}}
 
 /* Final: la escena queda de fondo, oscura y desenfocada, para que el puntaje se lea limpio. */
-.scene{filter:none}
 #square.over .scene{filter:brightness(.45) blur(3px); transition:filter .7s, opacity .5s, transform .8s}
 #square.over .tags, #square.over .said{opacity:0; transition:opacity .4s}
 

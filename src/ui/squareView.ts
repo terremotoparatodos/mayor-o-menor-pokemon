@@ -151,6 +151,22 @@ export class SquareView {
     this.stage.classList.remove('menu-out');
   }
 
+  /** Recuadros de retrato de las cartas, en coordenadas del escenario (sin la escala del reel). */
+  frameRects(): [{ x: number; y: number; size: number }, { x: number; y: number; size: number }] {
+    const rect = (side: string) => {
+      const frame = $<HTMLElement>(this.root, `.pcard[data-side="${side}"] .frame`);
+      const size = frame.offsetWidth;
+      let el: HTMLElement | null = frame;
+      let x = 0, y = 0;
+      while (el && el !== this.stage) { x += el.offsetLeft; y += el.offsetTop; el = el.offsetParent as HTMLElement | null; }
+      return { x: x + size / 2, y: y + size / 2, size };
+    };
+    return [rect('a'), rect('b')];
+  }
+
+  /** Sacudón del escenario (fuerte cuando se define el resultado). */
+  shake(strong: boolean) { replay(this.stage, strong ? 'shake-hard' : 'shake'); }
+
   setWaiting(on: boolean) { this.stage.classList.toggle('waiting', on); }
 
   flash(ok: boolean) {

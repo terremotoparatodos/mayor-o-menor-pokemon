@@ -5,7 +5,7 @@ import { Sfx } from '../audio/sfx';
 import { seeded, seedFrom, type Rng } from '../game/random';
 import { Session, type SessionConfig } from '../game/session';
 import type { Category, Guess, Phase, Round, Species } from '../game/types';
-import { CompareScene, TIMELINE } from '../render/compareScene';
+import { Comparison, type Beat } from '../render/comparison';
 import { LabelLayer } from '../render/labels';
 import { Panel } from '../ui/panel';
 import { SquareView } from '../ui/squareView';
@@ -19,7 +19,7 @@ export class Controller {
   config: SessionConfig;
   readonly sfx = new Sfx();
   private view: SquareView;
-  private scene: CompareScene;
+  private scene: Comparison;
   private panel: Panel;
   private rng: Rng;
   private seen: { phase: Phase; round: Round } | null = null;
@@ -32,8 +32,7 @@ export class Controller {
     this.config = config;
     this.rng = seeded(seedFrom(seed));
     this.view = new SquareView(square, { onGuess: (g) => this.guess(g), onMode: (c) => this.chooseMode(c) });
-    const canvas = square.querySelector<HTMLCanvasElement>('canvas.scene')!;
-    this.scene = new CompareScene(canvas, new LabelLayer(square.querySelector('.tags')!), canvas.width, canvas.height);
+    this.scene = new Comparison(square.querySelector('.scene')!, new LabelLayer(square.querySelector('.tags')!), (b) => this.beat(b));
     this.panel = new Panel(panelRoot, this);
     this.view.renderMenu();
     this.panel.refresh();
@@ -111,7 +110,6 @@ export class Controller {
     this.view.showStamp(null);
     this.view.setStage('reveal');
     this.scene.replay();
-    this.playRevealSounds();
   }
 
   frame(dt: number) {
@@ -175,9 +173,11 @@ export class Controller {
         void Promise.all([this.wait(MS.picked), this.ensurePrepared(round)]).then(([ok, ready]) => {
           if (!ok || !ready || id !== this.tx || s.round !== round || s.phase !== 'reveal') return;
           this.view.setWaiting(false);
+          const [a, b] = this.view.frameRects();
+          this.scene.setOrigin(a, b);
           this.view.setStage('reveal');
           this.scene.play(() => s.finishReveal());
-          this.playRevealSounds();
+          this.sfx.drumroll(0.75, 1.45);
         });
         void this.wait(MS.picked + 150).then((ok) => {
           if (ok && id === this.tx && this.scene.preparedFor !== round) this.view.setWaiting(true);
@@ -212,23 +212,12 @@ export class Controller {
     this.view.deal();
   }
 
-  private playRevealSounds() {
-    const s = this.session;
-    if (!s) return;
-    const T = TIMELINE;
-    this.sfx.drumroll(0.3, T.morphStart - 0.3);
-    this.sfx.morph(T.morphStart, T.morphDur);
-    if (s.category === 'height') {
-      const r = s.round;
-      // El más bajo se frena cuando la medición (easeInOut) llega a su altura.
-      const frac = Math.min(r.a.height, r.b.height) / Math.max(r.a.height, r.b.height);
-      const x = frac < 0.5 ? Math.cbrt(frac / 4) : 1 - Math.cbrt((1 - frac) / 4);
-      this.sfx.drumroll(T.height.sweep, T.height.sweepDur);
-      this.sfx.thud(T.height.sweep + T.height.sweepDur * x);
-      this.sfx.thud(T.height.sweep + T.height.sweepDur);
-    } else {
-      this.sfx.drumroll(T.weight.tilt - 0.2, 0.4);
-      this.sfx.thud(T.weight.tilt + 0.25);
-    }
+  /** Sonidos y sacudón en los momentos clave de la animación. */
+  private beat(b: Beat) {
+    if (b === 'land') { this.sfx.thud(); return; }
+    // Salto a escala real: golpe fuerte y sacudón.
+    this.sfx.thud();
+    this.sfx.morph(0, 0.25);
+    this.view.shake(true);
   }
 }

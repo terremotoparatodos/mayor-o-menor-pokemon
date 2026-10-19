@@ -1,4 +1,4 @@
-// Genera src/content/pokedex.json: especies jugables = modelo de Cobblemon + retrato PMD + altura/peso
+// Genera src/content/pokedex.json: especies jugables = retrato PMD + altura/peso
 // verificados en DOS fuentes independientes (si no coinciden exactamente, la especie queda fuera).
 //
 //   Fuente A · PokéAPI (CSV del repo PokeAPI/pokeapi): height en dm, weight en hg, forma por defecto.
@@ -44,7 +44,6 @@ function parseCsv(text) {
 }
 
 const readJson = (p) => JSON.parse(readFileSync(join(root, p), 'utf8'));
-const models = readJson('public/cobblemon/manifest.json').species;
 const portraits = new Set(readJson('public/portraits/manifest.json').dex);
 
 const pokemon = parseCsv(await source('pokemon.csv'));
@@ -57,19 +56,19 @@ for (const e of Object.values(showdown)) if (e.num > 0 && !e.forme && !sdBase.ha
 
 const out = [];
 const excluded = [];
-for (const [dexStr, m] of Object.entries(models)) {
-  const dex = Number(dexStr);
+for (const dex of [...portraits].sort((x, y) => x - y)) {
   const a = pokemon.find((p) => Number(p.species_id) === dex && p.is_default === '1');
   const b = sdBase.get(dex);
-  const why = !portraits.has(dex) ? 'sin retrato PMD' : !a ? 'sin dato PokéAPI' : !b ? 'sin dato Showdown' : null;
-  if (why) { excluded.push(`${m.slug}: ${why}`); continue; }
+  const slug = a?.identifier ?? `#${dex}`;
+  const why = !a ? 'sin dato PokéAPI' : !b ? 'sin dato Showdown' : null;
+  if (why) { excluded.push(`${slug}: ${why}`); continue; }
   const height = Number(a.height) / 10;
   const weight = Number(a.weight) / 10;
   if (Math.abs(height - b.heightm) > 1e-9 || Math.abs(weight - b.weightkg) > 1e-9) {
-    excluded.push(`${m.slug}: fuentes distintas (A ${height} m ${weight} kg · B ${b.heightm} m ${b.weightkg} kg)`);
+    excluded.push(`${slug}: fuentes distintas (A ${height} m ${weight} kg · B ${b.heightm} m ${b.weightkg} kg)`);
     continue;
   }
-  out.push({ dex, slug: m.slug, name: nameOf(dex, 7) ?? nameOf(dex, 9) ?? b.name, height, weight });
+  out.push({ dex, slug, name: nameOf(dex, 7) ?? nameOf(dex, 9) ?? b.name, height, weight });
 }
 out.sort((x, y) => x.dex - y.dex);
 
