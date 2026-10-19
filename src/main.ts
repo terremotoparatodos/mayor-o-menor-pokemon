@@ -9,9 +9,11 @@ if (params.get('cuadro') === '1') body.classList.add('cuadro');
 if (params.get('clean') === '1') body.classList.add('clean');
 if (params.get('nopanel') === '1') body.classList.add('nopanel');
 
-const players = params.get('jugadores')?.split(',').map((n) => n.trim().toUpperCase().slice(0, 12)).filter(Boolean);
-const app = new Controller(document.getElementById('square')!, document.getElementById('panel')!, params.get('seed'));
-app.start({ ...DEFAULT_CONFIG, players: players?.length ? players.slice(0, 2) : DEFAULT_CONFIG.players });
+const rounds = Number(params.get('rondas'));
+const config = { ...DEFAULT_CONFIG, totalRounds: Number.isFinite(rounds) && params.has('rondas') ? Math.max(0, Math.round(rounds)) : DEFAULT_CONFIG.totalRounds };
+const app = new Controller(document.getElementById('square')!, document.getElementById('panel')!, params.get('seed'), config);
+const mode = params.get('modo');
+if (mode === 'altura' || mode === 'peso') app.chooseMode(mode === 'altura' ? 'height' : 'weight');
 bindKeys(app);
 
 // El reel se escala para entrar en la ventana; R = grabación 1:1 (sin escalar).

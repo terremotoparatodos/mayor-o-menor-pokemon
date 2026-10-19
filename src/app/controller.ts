@@ -1,75 +1,115 @@
-// Orquesta sesión ↔ cuadro ↔ escena 3D ↔ sonido. Reacciona a cambios de fase (incluido deshacer).
+// Orquesta inicio ↔ sesión ↔ cuadro ↔ escena 3D ↔ sonido, y encadena las transiciones entre fases.
+// Cada transición lleva un número: si llega otra acción en el medio, la vieja se descarta.
 import pokedex from '../content/pokedex.json';
 import { Sfx } from '../audio/sfx';
-import { seeded, seedFrom } from '../game/random';
+import { seeded, seedFrom, type Rng } from '../game/random';
 import { Session, type SessionConfig } from '../game/session';
-import type { Guess, Phase, Round, Species } from '../game/types';
+import type { Category, Guess, Phase, Round, Species } from '../game/types';
 import { CompareScene, TIMELINE } from '../render/compareScene';
 import { LabelLayer } from '../render/labels';
 import { Panel } from '../ui/panel';
 import { SquareView } from '../ui/squareView';
 
 const POOL = pokedex as Species[];
+/** Duraciones de las transiciones (ms); deben coincidir con styles.css. */
+const MS = { modeOut: 560, picked: 650, leave: 420 };
 
 export class Controller {
-  session!: Session;
+  session: Session | null = null;
+  config: SessionConfig;
   readonly sfx = new Sfx();
   private view: SquareView;
   private scene: CompareScene;
   private panel: Panel;
+  private rng: Rng;
   private seen: { phase: Phase; round: Round } | null = null;
   private loading: Promise<boolean> | null = null;
   private loadingFor: Round | null = null;
+  private tx = 0;
+  private changing = false;
 
-  constructor(square: HTMLElement, panelRoot: HTMLElement, private seed: string | null) {
-    this.view = new SquareView(square, (g) => this.guess(g));
+  constructor(square: HTMLElement, panelRoot: HTMLElement, seed: string | null, config: SessionConfig) {
+    this.config = config;
+    this.rng = seeded(seedFrom(seed));
+    this.view = new SquareView(square, { onGuess: (g) => this.guess(g), onMode: (c) => this.chooseMode(c) });
     const canvas = square.querySelector<HTMLCanvasElement>('canvas.scene')!;
     this.scene = new CompareScene(canvas, new LabelLayer(square.querySelector('.tags')!), canvas.width, canvas.height);
-    this.panel = new Panel(panelRoot, {
-      next: () => this.next(),
-      reroll: () => this.session.reroll(),
-      toggleCategory: () => this.toggleCategory(),
-      replay: () => this.replay(),
-      undo: () => this.session.undo(),
-      switchTurn: () => this.session.switchTurn(),
-      newGame: (c) => this.start(c),
-      toggleCuadro: () => document.body.classList.toggle('cuadro'),
-      toggleGuides: () => document.body.classList.toggle('clean'),
-      toggleMute: () => this.sfx.toggleMute(),
-    });
+    this.panel = new Panel(panelRoot, this);
+    this.view.renderMenu();
+    this.panel.refresh();
   }
 
-  start(config: SessionConfig) {
-    this.session = new Session(POOL, config, seeded(seedFrom(this.seed)));
-    this.seen = null;
-    this.session.onChange(() => this.sync());
-    this.panel.bind(this.session);
-    this.sync();
+  private wait(ms: number) {
+    const id = this.tx;
+    return new Promise<boolean>((res) => setTimeout(() => res(id === this.tx), ms));
+  }
+
+  // ── Acciones (teclas, botones del cuadro y panel) ──
+
+  chooseMode(c: Category) {
+    this.sfx.unlock();
+    if (this.session || this.changing) return;
+    this.changing = true;
+    const id = ++this.tx;
+    this.sfx.pick();
+    this.view.pickMode(c);
+    const s = new Session(POOL, this.config, c, this.rng);
+    void this.ensurePrepared(s.round);
+    void this.wait(MS.modeOut).then((ok) => {
+      this.changing = false;
+      if (!ok || id !== this.tx) return;
+      this.session = s;
+      this.seen = null;
+      s.onChange(() => this.sync());
+      this.view.resetMenu();
+      this.sync();
+    });
   }
 
   guess(g: Guess) {
     this.sfx.unlock();
-    if (this.session.phase !== 'guess') return;
+    if (!this.session) { this.chooseMode(g === 'a' ? 'height' : 'weight'); return; }
+    if (this.session.phase !== 'guess' || this.changing) return;
     this.sfx.pick();
     this.session.guess(g);
   }
 
-  /** Enter: salta la animación, o continúa. */
+  /** Enter: salta la animación, continúa, o al final vuelve al inicio. */
   next() {
     this.sfx.unlock();
-    if (this.session.phase === 'reveal') { this.scene.skip(); return; }
-    this.session.next();
+    const s = this.session;
+    if (!s || this.changing) return;
+    if (s.phase === 'reveal') { this.scene.skip(); return; }
+    if (s.phase === 'over') { this.toMenu(); return; }
+    s.next();
   }
 
-  toggleCategory() {
-    const r = this.session.round;
-    this.session.setCategory(r.category === 'height' ? 'weight' : 'height');
+  toMenu() {
+    if (!this.session) return;
+    const id = ++this.tx;
+    this.changing = true;
+    this.session = null;
+    this.view.setStage('leaving');
+    this.view.showStamp(null);
+    void this.wait(MS.leave).then(() => {
+      this.changing = false;
+      if (id !== this.tx) return;
+      this.scene.hide();
+      this.view.renderMenu();
+      this.panel.refresh();
+    });
   }
+
+  reroll() { if (!this.changing) this.session?.reroll(); }
+  undo() { if (!this.changing) this.session?.undo(); }
+  adjustScore(d: number) { this.session?.adjustScore(d); }
 
   replay() {
-    const ph = this.session.phase;
+    const ph = this.session?.phase;
     if (ph !== 'result' && ph !== 'over') return;
+    ++this.tx;
     this.view.showStamp(null);
+    this.view.setStage('reveal');
     this.scene.replay();
     this.playRevealSounds();
   }
@@ -78,7 +118,7 @@ export class Controller {
     this.scene.frame(dt);
   }
 
-  /** Carga los modelos de la ronda; si falta alguno pide otro rival (hasta 5 intentos). */
+  /** Carga los modelos de la ronda; si falta alguno pide otra pareja. */
   private ensurePrepared(round: Round): Promise<boolean> {
     if (this.scene.preparedFor === round) return Promise.resolve(true);
     if (this.loading && this.loadingFor === round) return this.loading;
@@ -87,66 +127,99 @@ export class Controller {
       () => this.scene.preparedFor === round,
       (err) => {
         console.warn(`Modelo no disponible (${round.a.name} / ${round.b.name}):`, err);
-        if (this.session.round === round && this.session.phase === 'guess') this.session.reroll();
+        const s = this.session;
+        if (s && s.round === round && s.phase === 'guess') s.reroll();
         return false;
       },
     );
     return this.loading;
   }
 
+  // ── Reacción a cambios de la sesión ──
+
   private sync() {
     const s = this.session;
+    if (!s) return;
     const prev = this.seen;
     this.seen = { phase: s.phase, round: s.round };
-    this.view.render(s);
-    if (prev && prev.phase === s.phase && prev.round === s.round) return;
+    this.panel.refresh();
+    if (prev && prev.phase === s.phase && prev.round === s.round) { this.view.render(s); return; }
+    const id = ++this.tx;
 
     switch (s.phase) {
-      case 'guess':
-        this.scene.hide();
-        this.view.setReveal(false);
+      case 'guess': {
         this.view.setWaiting(false);
-        this.view.showStamp(null);
-        if (prev?.phase === 'result') this.sfx.nextRound();
         void this.ensurePrepared(s.round);
+        if (prev?.phase === 'result') {
+          // Ronda nueva: la escena se va y recién después entran las cartas nuevas.
+          this.view.setStage('leaving');
+          this.view.showStamp(null);
+          void this.wait(MS.leave).then((ok) => {
+            if (!ok || id !== this.tx) return;
+            this.scene.hide();
+            this.enterGuess(s);
+            this.sfx.nextRound();
+          });
+        } else {
+          this.scene.hide();
+          this.view.showStamp(null);
+          if (prev && prev.round === s.round) { this.view.render(s); this.view.setStage('guess'); }
+          else this.enterGuess(s);
+        }
         break;
+      }
       case 'reveal': {
         const round = s.round;
-        this.view.setWaiting(this.scene.preparedFor !== round);
-        void this.ensurePrepared(round).then((ok) => {
-          if (!ok || s !== this.session || s.round !== round || s.phase !== 'reveal') return;
+        this.view.render(s);
+        this.view.setStage('picked', s.outcome!.guess);
+        void Promise.all([this.wait(MS.picked), this.ensurePrepared(round)]).then(([ok, ready]) => {
+          if (!ok || !ready || id !== this.tx || s.round !== round || s.phase !== 'reveal') return;
           this.view.setWaiting(false);
-          this.view.setReveal(true);
+          this.view.setStage('reveal');
           this.scene.play(() => s.finishReveal());
           this.playRevealSounds();
+        });
+        void this.wait(MS.picked + 150).then((ok) => {
+          if (ok && id === this.tx && this.scene.preparedFor !== round) this.view.setWaiting(true);
         });
         break;
       }
       case 'result':
       case 'over': {
+        this.view.render(s);
         const round = s.round;
-        void this.ensurePrepared(round).then((ok) => {
-          if (!ok || s !== this.session || s.round !== round) return;
-          // Si venimos de deshacer, la escena se pinta directamente en su estado final.
-          if (prev?.phase !== 'reveal' && prev?.phase !== 'result') this.scene.showFinal();
-          this.view.setReveal(true);
-        });
-        this.view.showStamp(s);
         if (prev?.phase === 'reveal') {
-          if (s.outcome?.correct) this.sfx.correct(); else this.sfx.wrong();
+          this.view.flash(s.outcome!.correct);
+          if (s.outcome!.correct) this.sfx.correct(); else this.sfx.wrong();
+        } else {
+          // Viene de deshacer o del final: la escena se pinta directamente en su estado final.
+          void this.ensurePrepared(round).then((ok) => {
+            if (!ok || id !== this.tx || s.round !== round) return;
+            if (this.scene.preparedFor === round && prev?.phase !== 'result') this.scene.showFinal();
+            this.view.setStage('reveal');
+          });
         }
+        this.view.showStamp(s);
         if (s.phase === 'over') this.sfx.final();
         break;
       }
     }
   }
 
+  private enterGuess(s: Session) {
+    this.view.render(s);
+    this.view.setStage('guess');
+    this.view.deal();
+  }
+
   private playRevealSounds() {
+    const s = this.session;
+    if (!s) return;
     const T = TIMELINE;
     this.sfx.drumroll(0.3, T.morphStart - 0.3);
     this.sfx.morph(T.morphStart, T.morphDur);
-    if (this.session.round.category === 'height') {
-      const r = this.session.round;
+    if (s.category === 'height') {
+      const r = s.round;
       // El más bajo se frena cuando la medición (easeInOut) llega a su altura.
       const frac = Math.min(r.a.height, r.b.height) / Math.max(r.a.height, r.b.height);
       const x = frac < 0.5 ? Math.cbrt(frac / 4) : 1 - Math.cbrt((1 - frac) / 4);

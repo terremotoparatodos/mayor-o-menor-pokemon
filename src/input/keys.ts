@@ -5,21 +5,20 @@ export function bindKeys(app: Controller) {
   addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
     if (t.closest('input, select, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
-    const s = app.session;
     const body = document.body;
     const k = e.key.toLowerCase();
     const handled = (() => {
       switch (k) {
+        // En el inicio ← elige ALTURA y → elige PESO (mismo lado que los botones).
         case 'arrowleft': case '1': app.guess('a'); return true;
         case 'arrowright': case '2': app.guess('b'); return true;
         case 'enter': case ' ': app.next(); return true;
-        case 'n': s.reroll(); return true;
-        case 'c': app.toggleCategory(); return true;
+        case 'n': app.reroll(); return true;
         case 'a': app.replay(); return true;
-        case 'u': case 'backspace': s.undo(); return true;
-        case 'j': s.switchTurn(); return true;
-        case '+': case '=': s.adjustScore(s.round.player, 1); return true;
-        case '-': s.adjustScore(s.round.player, -1); return true;
+        case 'u': case 'backspace': app.undo(); return true;
+        case '+': case '=': app.adjustScore(1); return true;
+        case '-': app.adjustScore(-1); return true;
+        case 'escape': app.toMenu(); return true;
         case 'm': app.sfx.toggleMute(); return true;
         case 'r': body.classList.toggle('rec'); return true;
         case 'g': body.classList.toggle('clean'); return true;

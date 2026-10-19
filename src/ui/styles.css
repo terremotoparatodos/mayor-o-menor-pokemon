@@ -58,34 +58,27 @@ body.clean #square::after{display:none}
 .slab{background:var(--panel); border:4px solid var(--ink); border-radius:12px;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.12), 6px 6px 0 rgba(0,0,0,.35)}
 
-/* ── CABECERA: marcadores + logo ── */
+/* ── CABECERA: puntaje · logo · modo ── */
 .head{left:24px; right:24px; top:22px; height:118px; display:grid; grid-template-columns:250px 1fr 250px; gap:16px; align-items:stretch}
-.player{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; transition:opacity .25s}
-.player .pname{font-size:28px; letter-spacing:.04em; line-height:1}
-.player .pscore{font-size:52px; line-height:1; font-variant-numeric:tabular-nums}
-.player .turn{position:absolute; bottom:-15px; font-size:13px; letter-spacing:.12em; padding:5px 11px 4px; border-radius:999px;
-  background:var(--gold); color:var(--ink); border:3px solid var(--ink); opacity:0; transform:translateY(6px); transition:opacity .25s, transform .25s}
-.player.active{box-shadow:inset 0 0 0 2px rgba(255,255,255,.12), 0 0 0 5px var(--gold), 6px 6px 0 5px rgba(0,0,0,.35)}
-.player.active .turn{opacity:1; transform:none}
-.player:not(.active){opacity:.62}
-.head.solo{grid-template-columns:1fr 250px}
-.head.solo .player[data-p="1"]{display:none}
-.pscore.bump{animation:bump .42s}
-@keyframes bump{40%{transform:scale(1.3)}100%{transform:none}}
+.box{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px}
+.box-label{font-size:14px; letter-spacing:.22em; color:rgba(255,255,255,.7)}
+.pscore{font-size:58px; line-height:1; font-variant-numeric:tabular-nums}
+.pscore.bump{animation:bump .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bump{40%{transform:scale(1.35)}100%{transform:none}}
+.plus{position:absolute; right:22px; top:28px; font-size:30px; color:var(--ok-hi); opacity:0; pointer-events:none}
+.plus.go{animation:plusUp 1.1s ease-out}
+@keyframes plusUp{0%{opacity:0; transform:translateY(14px) scale(.6)}20%{opacity:1; transform:translateY(0) scale(1.15)}100%{opacity:0; transform:translateY(-34px)}}
+.mode-name{font-size:36px; line-height:1; color:var(--gold)}
 
 .title{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px}
 .logo{font-size:44px; line-height:.95; white-space:nowrap; letter-spacing:.01em}
 .logo span{color:var(--gold); font-size:.7em}
-.meta{display:flex; gap:10px; align-items:center}
+.meta{display:flex; gap:10px; align-items:center; min-height:18px}
 .round-no{font-size:18px; white-space:nowrap}
-.chip{display:inline-block; padding:6px 12px 5px; border-radius:8px; border:3px solid var(--ink); font-size:15px; letter-spacing:.08em;
-  box-shadow:0 3px 0 rgba(0,0,0,.4); color:var(--ink); white-space:nowrap}
-.chip.height{background:#7ee07f}
-.chip.weight{background:#ff9d59}
 
 /* ── PROGRESO ── */
 .progress{left:24px; right:24px; top:158px; height:12px; display:flex; gap:5px}
-.progress i{flex:1; border-radius:4px; background:rgba(255,255,255,.18); border:2px solid rgba(0,0,0,.45)}
+.progress i{flex:1; border-radius:4px; background:rgba(255,255,255,.18); border:2px solid rgba(0,0,0,.45); transition:background .3s}
 .progress i.ok{background:var(--ok)}
 .progress i.no{background:var(--no)}
 .progress i.current{background:#fff; animation:blink 1.2s ease-in-out infinite}
@@ -93,23 +86,57 @@ body.clean #square::after{display:none}
 
 /* ── PREGUNTA ── */
 .question{left:24px; right:24px; top:182px; height:72px; display:flex; align-items:center; justify-content:center; text-align:center}
-.q-text{font-size:32px; line-height:1.1; white-space:nowrap}
-.q-text b{color:var(--gold); font-weight:inherit}
-.q-text em{font-style:normal; color:var(--ok-hi)}
-.q-text i{font-style:normal; color:var(--no-hi)}
+.q-text{font-size:46px; line-height:1.1; white-space:nowrap; transition:opacity .2s}
+.q-text.swap{animation:qIn .5s cubic-bezier(.2,1.2,.4,1) backwards}
+@keyframes qIn{from{opacity:0; transform:translateY(-14px) scale(.92)}}
+#square.resulted .q-text{opacity:0}
 
-/* ── ESCENARIO (cartas o escena 3D) ── */
+/* ── ESCENARIO ──────────────────────────────────────────────────
+   Estados (clases de .stage, ver SquareView.setStage):
+   menu → elegir modo · guess → cartas · picked → se resalta la elegida ·
+   reveal → las cartas se alejan y entra la escena 3D · leaving → la escena se va.
+   Las animaciones de entrada usan fill "backwards" para no pisar las transiciones. */
 .stage{left:0; top:262px; width:var(--sq); height:818px}
 .stage > *{position:absolute}
-.scene{left:0; top:0; width:1080px; height:818px; opacity:0; transition:opacity .35s}
-.stage.reveal .scene{opacity:1}
+.scene{left:0; top:0; width:1080px; height:818px; opacity:0; transform:scale(1.08);
+  transition:opacity .5s ease-out, transform .8s cubic-bezier(.2,.8,.2,1)}
+.stage.reveal .scene{opacity:1; transform:none}
+.stage.leaving .scene{opacity:0; transform:scale(.94); transition:opacity .38s ease-in, transform .42s ease-in}
+.stage.leaving .tags, .stage.leaving .said{opacity:0 !important}
+
+/* Inicio: elegir ALTURA o PESO */
+.modes{left:56px; right:56px; top:30px; height:730px; display:grid; grid-template-columns:1fr 1fr; gap:36px;
+  opacity:0; visibility:hidden; pointer-events:none; transition:opacity .3s, visibility 0s .3s}
+.stage.menu .modes{opacity:1; visibility:visible; pointer-events:auto; transition:opacity .3s}
+.stage.menu .cards, .stage.menu .choices, .stage.menu .scene{opacity:0; pointer-events:none; transition:none}
+.mode-btn{all:unset; box-sizing:border-box; cursor:pointer; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+  border-radius:18px; border:5px solid var(--ink); background:var(--panel); font-family:var(--pixel); color:#fff;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.12), 0 0 0 5px var(--c), 8px 8px 0 5px rgba(0,0,0,.35);
+  transition:transform .35s cubic-bezier(.3,1.5,.5,1), opacity .35s, box-shadow .35s}
+.mode-btn[data-mode="height"]{--c:var(--gold)}
+.mode-btn[data-mode="weight"]{--c:var(--blue)}
+.mode-btn svg{width:190px; height:190px; fill:none; stroke:var(--c); stroke-width:4; stroke-linejoin:round; stroke-linecap:round;
+  filter:drop-shadow(0 6px 0 rgba(0,0,0,.45))}
+.mb-name{font-size:72px; line-height:1; color:var(--c)}
+.mb-q{font-size:21px; letter-spacing:.04em; color:rgba(255,255,255,.85)}
+.mb-key{position:absolute; top:-20px; font-size:16px; padding:6px 16px 5px; border-radius:999px; border:3px solid var(--ink); background:var(--c); color:var(--ink)}
+.mode-btn:hover{transform:translateY(-5px)}
+.mode-btn:focus-visible{outline:5px solid #fff; outline-offset:6px}
+.stage.menu .mode-btn{animation:menuIn .6s cubic-bezier(.2,1.3,.4,1) backwards}
+.stage.menu .mode-btn[data-mode="weight"]{animation-delay:.1s}
+@keyframes menuIn{from{opacity:0; transform:translateY(40px) scale(.9)}}
+.stage.menu-out .mode-btn.chosen{transform:scale(1.06); box-shadow:inset 0 0 0 2px rgba(255,255,255,.2), 0 0 0 8px var(--c), 0 0 60px var(--c)}
+.stage.menu-out .mode-btn.dropped{opacity:0; transform:scale(.88) translateY(20px)}
 
 /* Cartas con retrato de Mystery Dungeon: todas iguales de tamaño → no se puede medir a ojo. */
-.cards{left:56px; right:56px; top:18px; height:560px; display:grid; grid-template-columns:1fr 92px 1fr; align-items:center; transition:opacity .35s, transform .35s}
-.stage.reveal .cards{opacity:0; transform:scale(.94); pointer-events:none}
-.pcard{height:540px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; position:relative}
-.pcard[data-side="a"]{box-shadow:inset 0 0 0 2px rgba(255,255,255,.12), 0 0 0 5px var(--gold), 6px 6px 0 5px rgba(0,0,0,.35)}
-.pcard[data-side="b"]{box-shadow:inset 0 0 0 2px rgba(255,255,255,.12), 0 0 0 5px var(--blue), 6px 6px 0 5px rgba(0,0,0,.35)}
+.cards{left:56px; right:56px; top:18px; height:560px; display:grid; grid-template-columns:1fr 92px 1fr; align-items:center;
+  transition:opacity .45s ease-in, transform .5s cubic-bezier(.5,0,.75,0)}
+.stage.reveal .cards{opacity:0; transform:scale(.8) translateY(-24px); pointer-events:none}
+.pcard{height:540px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; position:relative; cursor:pointer;
+  --c:var(--gold); box-shadow:inset 0 0 0 2px rgba(255,255,255,.12), 0 0 0 5px var(--c), 6px 6px 0 5px rgba(0,0,0,.35);
+  transition:transform .35s cubic-bezier(.3,1.5,.5,1), opacity .3s, box-shadow .3s}
+.pcard[data-side="b"]{--c:var(--blue)}
+.pcard:hover{transform:translateY(-4px)}
 .pc-label{position:absolute; top:-18px; font-size:15px; letter-spacing:.12em; padding:6px 14px 5px; border-radius:999px; border:3px solid var(--ink);
   background:var(--gold); color:var(--ink)}
 .pcard[data-side="b"] .pc-label{background:var(--blue); color:#fff}
@@ -121,19 +148,35 @@ body.clean #square::after{display:none}
 .pc-name{font-size:38px; line-height:1; max-width:400px; text-align:center; white-space:nowrap}
 .pc-name.long{font-size:30px}
 .pc-value{font-size:46px; line-height:1; color:var(--gold); font-variant-numeric:tabular-nums}
-.pcard{cursor:pointer}
 .pcard[data-side="b"] .pc-value{color:#cfe0ff}
 .vs{text-align:center; font-size:48px; color:var(--gold)}
-.cards.deal .pcard{animation:deal .45s both}
-.cards.deal .pcard[data-side="b"]{animation-delay:.12s}
-@keyframes deal{from{opacity:0; transform:translateY(18px) scale(.96)}}
+
+/* Reparto de una ronda nueva: cada carta entra desde su lado y el retrato se da vuelta. */
+.cards.deal .pcard[data-side="a"]{animation:dealA .6s cubic-bezier(.2,1.25,.4,1) backwards}
+.cards.deal .pcard[data-side="b"]{animation:dealB .6s .08s cubic-bezier(.2,1.25,.4,1) backwards}
+.cards.deal .frame{animation:flip .5s .22s cubic-bezier(.2,1.2,.4,1) backwards}
+.cards.deal .pcard[data-side="b"] .frame{animation-delay:.3s}
+.cards.deal .vs{animation:pop .45s .32s cubic-bezier(.3,1.8,.5,1) backwards}
+@keyframes dealA{from{opacity:0; transform:translateX(-140px) rotate(-7deg) scale(.92)}}
+@keyframes dealB{from{opacity:0; transform:translateX(140px) rotate(7deg) scale(.92)}}
+@keyframes flip{from{transform:perspective(600px) rotateY(90deg)}}
+@keyframes pop{from{opacity:0; transform:scale(0) rotate(-20deg)}}
+
+/* Elección: la carta elegida se agranda y brilla; la otra se apaga. */
+.stage.picked .pcard{cursor:default}
+.stage.pick-a .pcard[data-side="a"], .stage.pick-b .pcard[data-side="b"]{transform:scale(1.06) translateY(-6px);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.2), 0 0 0 9px var(--c), 0 0 70px var(--c), 6px 6px 0 9px rgba(0,0,0,.35)}
+.stage.pick-a .pcard[data-side="b"], .stage.pick-b .pcard[data-side="a"]{opacity:.4; transform:scale(.95)}
+.stage.picked .vs{opacity:0; transition:opacity .2s}
 
 /* Botones de respuesta */
 .choices{left:56px; right:56px; top:612px; height:150px; display:grid; grid-template-columns:1fr 1fr; gap:28px; transition:opacity .3s}
+.choices.deal{animation:fadeUp .5s .25s ease-out backwards}
+@keyframes fadeUp{from{opacity:0; transform:translateY(26px)}}
 .stage.reveal .choices{opacity:0; pointer-events:none}
 .choice{all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:18px;
   font-family:var(--pixel); font-size:40px; color:#fff; border-radius:16px; border:5px solid var(--ink);
-  box-shadow:inset 0 -8px 0 rgba(0,0,0,.25), 0 7px 0 rgba(0,0,0,.45); transition:transform .08s;
+  box-shadow:inset 0 -8px 0 rgba(0,0,0,.25), 0 7px 0 rgba(0,0,0,.45); transition:transform .12s, opacity .3s;
   text-shadow:-2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink), 2px 2px 0 var(--ink)}
 .choice .arrow{font-size:46px}
 .choice.pick-a{background:linear-gradient(180deg,#ffe27a,#d9a915); color:var(--ink); text-shadow:0 2px 0 rgba(255,255,255,.35)}
@@ -142,12 +185,14 @@ body.clean #square::after{display:none}
 .choice:hover{transform:translateY(-3px)}
 .choice:active{transform:translateY(3px)}
 .choice:focus-visible{outline:5px solid #fff; outline-offset:3px}
+.stage.pick-a .choice.pick-a, .stage.pick-b .choice.pick-b{transform:translateY(5px); box-shadow:inset 0 -3px 0 rgba(0,0,0,.25), 0 2px 0 rgba(0,0,0,.45)}
+.stage.pick-a .choice.pick-b, .stage.pick-b .choice.pick-a{opacity:.3}
 
 /* Lo que eligió el jugador (abajo, sobre la escena) */
-.said{left:0; right:0; bottom:22px; text-align:center; font-size:26px; opacity:0; transition:opacity .3s}
+.said{left:0; right:0; bottom:22px; text-align:center; font-size:26px; opacity:0; transform:translateY(16px); transition:opacity .3s, transform .4s}
 .said b{padding:4px 14px 2px; border-radius:10px; border:3px solid var(--ink); text-shadow:none; color:#fff}
 .said b.a{background:var(--gold); color:var(--ink)} .said b.b{background:var(--blue)}
-.stage.reveal .said{opacity:1}
+.stage.reveal .said{opacity:1; transform:none; transition-delay:.4s}
 
 /* Carteles que siguen a cada Pokémon */
 .tags{left:0; top:0; width:1080px; height:818px; pointer-events:none; opacity:0; transition:opacity .3s}
@@ -167,12 +212,25 @@ body.clean #square::after{display:none}
 .stamp small{font-size:.5em; letter-spacing:.08em}
 .stamp.ok{background:var(--ok); color:#fff}
 .stamp.no{background:var(--no); color:#fff}
-.stamp.final{top:46%; flex-direction:column; align-items:center; gap:10px; background:var(--panel); color:var(--gold); font-size:54px; padding:20px 40px 16px}
-.stamp.final small{color:#fff}
-.stamp.show{animation:stampIn .5s both}
+.stamp.final{top:44%; flex-direction:column; align-items:center; gap:8px; background:var(--panel); color:#fff; font-size:40px; padding:24px 54px 20px;
+  box-shadow:0 0 0 6px var(--gold), 10px 10px 0 6px rgba(0,0,0,.4)}
+.stamp.final b{font-size:120px; line-height:1; color:var(--gold); font-weight:inherit}
+.stamp.final small{font-size:.5em; letter-spacing:.2em}
+.stamp.show{animation:stampIn .55s cubic-bezier(.3,1.5,.5,1) both}
+.stamp.final.show{animation-duration:.8s}
 @keyframes stampIn{0%{opacity:0; transform:translate(-50%,-50%) scale(.4) rotate(-6deg)}60%{opacity:1; transform:translate(-50%,-50%) scale(1.08) rotate(1deg)}100%{opacity:1; transform:translate(-50%,-50%) scale(1)}}
-#square.resulted .q-text{opacity:0}
-.q-text{transition:opacity .2s}
+
+/* Final: la escena queda de fondo, oscura y desenfocada, para que el puntaje se lea limpio. */
+.scene{filter:none}
+#square.over .scene{filter:brightness(.45) blur(3px); transition:filter .7s, opacity .5s, transform .8s}
+#square.over .tags, #square.over .said{opacity:0; transition:opacity .4s}
+
+/* Destello de borde al revelar el resultado */
+.flash{inset:0; pointer-events:none; opacity:0; z-index:4; border-radius:2px}
+.flash.ok{box-shadow:inset 0 0 0 10px var(--ok-hi), inset 0 0 160px rgba(88,227,106,.55)}
+.flash.no{box-shadow:inset 0 0 0 10px var(--no-hi), inset 0 0 160px rgba(255,90,79,.55)}
+.flash.go{animation:flashGo 1.1s ease-out}
+@keyframes flashGo{0%{opacity:0}12%{opacity:1}30%{opacity:.6}45%{opacity:1}100%{opacity:0}}
 
 .loading{left:0; right:0; top:46%; text-align:center; font-size:30px; opacity:0; transition:opacity .2s; pointer-events:none}
 .stage.waiting .loading{opacity:1}

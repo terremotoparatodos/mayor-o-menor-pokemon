@@ -8,9 +8,7 @@ import { formatValue } from './format';
 
 const pool = pokedex as Species[];
 const config: SessionConfig = {
-  players: ['SKY', 'GUTI'],
   totalRounds: 5,
-  categoryMode: 'alternate',
   rules: { minRatio: 1.15, maxRatio: 6, recentWindow: 30 },
 };
 
@@ -55,29 +53,35 @@ describe('rondas', () => {
 });
 
 describe('sesión', () => {
-  it('suma al jugador del turno sólo al terminar la animación y alterna turnos', () => {
-    const s = new Session(pool, config, seeded(7));
+  it('suma al puntaje único sólo al terminar la animación y cada ronda es una pareja nueva', () => {
+    const s = new Session(pool, config, 'height', seeded(7));
     const first = s.round;
     s.guess(correctGuess(first.a, first.b, first.category));
     expect(s.phase).toBe('reveal');
-    expect(s.players[0].score).toBe(0);
+    expect(s.score).toBe(0);
     s.finishReveal();
-    expect(s.players[0].score).toBe(1);
+    expect(s.score).toBe(1);
     s.next();
-    expect(s.round.player).toBe(1);
-    // Pareja nueva: ninguno de los dos ya fue medido en la ronda anterior.
+    expect(s.round.no).toBe(2);
     expect([first.a.dex, first.b.dex]).not.toContain(s.round.a.dex);
     expect([first.a.dex, first.b.dex]).not.toContain(s.round.b.dex);
-    expect(s.round.category).not.toBe(first.category); // alternado
+  });
+
+  it('la categoría elegida al iniciar vale para toda la partida', () => {
+    const s = new Session(pool, config, 'weight', seeded(11));
+    for (let i = 0; i < config.totalRounds; i++) {
+      expect(s.round.category).toBe('weight');
+      s.guess('a'); s.finishReveal(); s.next();
+    }
   });
 
   it('una respuesta incorrecta no suma y deshacer restaura todo', () => {
-    const s = new Session(pool, config, seeded(9));
+    const s = new Session(pool, config, 'height', seeded(9));
     const r = s.round;
     const wrong = correctGuess(r.a, r.b, r.category) === 'a' ? 'b' : 'a';
     s.guess(wrong);
     s.finishReveal();
-    expect(s.players[0].score).toBe(0);
+    expect(s.score).toBe(0);
     expect(s.results).toEqual([false]);
     s.undo();
     expect(s.phase).toBe('guess');
@@ -86,7 +90,7 @@ describe('sesión', () => {
   });
 
   it('no se puede responder dos veces ni avanzar antes del resultado', () => {
-    const s = new Session(pool, config, seeded(3));
+    const s = new Session(pool, config, 'height', seeded(3));
     s.guess('a');
     s.guess('b');
     expect(s.outcome!.guess).toBe('a');
@@ -94,9 +98,11 @@ describe('sesión', () => {
     expect(s.round.no).toBe(1);
   });
 
-  it('termina tras totalRounds', () => {
-    const s = new Session(pool, config, seeded(5));
+  it('termina tras totalRounds y se puede deshacer el final', () => {
+    const s = new Session(pool, config, 'height', seeded(5));
     for (let i = 0; i < config.totalRounds; i++) { s.guess('a'); s.finishReveal(); s.next(); }
     expect(s.phase).toBe('over');
+    s.undo();
+    expect(s.phase).toBe('result');
   });
 });

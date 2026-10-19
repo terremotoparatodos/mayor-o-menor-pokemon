@@ -49,9 +49,3 @@ export function pickChallenger(
   }
   throw new Error('No hay rival posible para esta pareja');
 }
-
-export function nextCategory(mode: 'alternate' | 'random' | Category, prev: Category | null, rng: Rng): Category {
-  if (mode === 'height' || mode === 'weight') return mode;
-  if (mode === 'random') return rng() < 0.5 ? 'height' : 'weight';
-  return prev === 'height' ? 'weight' : 'height';
-}

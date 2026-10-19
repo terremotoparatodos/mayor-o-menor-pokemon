@@ -20,8 +20,6 @@ export interface Round {
   a: Species;
   /** Derecha. */
   b: Species;
-  /** Índice del jugador que responde. */
-  player: number;
 }
 
 export type Phase = 'guess' | 'reveal' | 'result' | 'over';

@@ -3,9 +3,10 @@
      ¿MAYOR O MENOR? POKÉMON · higher or lower de altura y peso
      Reel 1920×1080 con el CUADRO de juego 1080×1080 centrado (para recortar en edición).
      ?cuadro=1 → el reel es sólo el cuadro 1080×1080.
-     Teclas: ←/1 elige el de la izquierda · →/2 el de la derecha · Enter/Espacio continuar (o saltar)
-             N otra pareja · C cambiar categoría · A repetir animación · U deshacer
-             J cambiar turno · +/− punto al jugador del turno · M mute · R grabación 1:1
+     Inicio: ←/1 ALTURA · →/2 PESO. En juego: ←/1 izquierda · →/2 derecha
+             Enter/Espacio continuar (o saltar la animación; al final vuelve al inicio)
+             N otra pareja · A repetir animación · U deshacer · +/− puntaje · Esc inicio
+             M mute · R grabación 1:1
              G guías · P panel
      URL: ?seed=texto partida reproducible · ?nopanel=1 · ?clean=1 sin guías
      ═══════════════════════════════════════════════════════════════ -->
@@ -23,12 +24,12 @@
   <!-- ═════════ CUADRO 1080×1080 (lo único que importa en edición) ═════════ -->
   <main id="square">
     <header class="head">
-      <section class="player slab" data-p="0"><div class="pname outline-s"></div><div class="pscore outline-s">0</div><div class="turn">JUEGA</div></section>
+      <section class="box scorebox slab"><div class="box-label">PUNTOS</div><div class="pscore outline-s">0</div><div class="plus outline-s">+1</div></section>
       <div class="title">
         <div class="logo outline">¿MAYOR <span>O</span> MENOR?</div>
-        <div class="meta"><span class="round-no outline-s"></span><span class="chip cat"></span></div>
+        <div class="meta"><span class="round-no outline-s"></span></div>
       </div>
-      <section class="player slab" data-p="1"><div class="pname outline-s"></div><div class="pscore outline-s">0</div><div class="turn">JUEGA</div></section>
+      <section class="box modebox slab"><div class="box-label">MODO</div><div class="mode-name outline-s"></div></section>
     </header>
     <div class="progress"></div>
     <div class="question"><div class="q-text outline"></div></div>
@@ -36,6 +37,22 @@
     <div class="stage">
       <canvas class="scene" width="1080" height="818"></canvas>
       <div class="tags"></div>
+
+      <!-- Inicio: se elige la categoría de toda la partida -->
+      <div class="modes">
+        <button class="mode-btn" data-mode="height">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="22" y="4" width="20" height="56" rx="3"/><path d="M22 14h9M22 24h13M22 34h9M22 44h13M22 54h9"/></svg>
+          <span class="mb-name outline">ALTURA</span>
+          <span class="mb-q">¿QUIÉN ES MÁS ALTO?</span>
+          <span class="mb-key">◀</span>
+        </button>
+        <button class="mode-btn" data-mode="weight">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M24 18a8 8 0 1 1 16 0"/><path d="M14 22h36l8 36H6z"/><path d="M26 42h12"/></svg>
+          <span class="mb-name outline">PESO</span>
+          <span class="mb-q">¿QUIÉN ES MÁS PESADO?</span>
+          <span class="mb-key">▶</span>
+        </button>
+      </div>
 
       <div class="cards">
         <article class="pcard slab" data-side="a">
@@ -61,6 +78,7 @@
       <div class="said outline-s"></div>
       <div class="stamp outline-s"></div>
       <div class="loading outline-s">CARGANDO…</div>
+      <div class="flash"></div>
     </div>
   </main>
 

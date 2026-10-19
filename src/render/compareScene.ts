@@ -290,8 +290,10 @@ export class CompareScene {
       this.labels.setProgress(easeOut(tilt), easeOut(tilt));
     }
 
-    this.placePoke(A, xA, yA, kA, 0.35, isHeight);
-    this.placePoke(B, xB, yB, kB, -0.35, isHeight);
+    // Entrada: cada uno aparece girando hacia el centro.
+    const spin = (1 - easeOut(span(t, 0, 0.8))) * 2.6;
+    this.placePoke(A, xA, yA, kA, 0.35 - spin, isHeight);
+    this.placePoke(B, xB, yB, kB, -0.35 + spin, isHeight);
     const floorW = (maxX - minX) * 1.6;
     this.floor.scale.set(floorW, floorW * 0.55, 1);
     this.floor.position.set((minX + maxX) / 2, 0.001, 0);
