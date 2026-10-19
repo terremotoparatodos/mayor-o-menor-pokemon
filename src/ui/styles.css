@@ -237,6 +237,23 @@ body.clean #square::after{display:none}
 .said b{padding:4px 14px 2px; border-radius:10px; border:3px solid var(--ink); text-shadow:none; color:#fff}
 .said b.a{background:var(--gold); color:var(--ink)} .said b.b{background:var(--blue)}
 .stage.reveal .said{opacity:1; transform:none; transition-delay:.4s}
+#square.resulted .stage .said{opacity:0; transition-delay:0s}
+
+/* Continuar dentro del cuadro: aparece con el resultado y con el puntaje final. */
+.next-btn{all:unset; position:absolute; box-sizing:border-box; left:50%; bottom:14px; display:flex; align-items:center; gap:14px; cursor:pointer; z-index:6;
+  padding:12px 30px 10px; border-radius:14px; border:5px solid var(--ink); background:linear-gradient(180deg,var(--ok-hi),#1f9d35);
+  font-family:var(--pixel); font-size:30px; color:#fff; white-space:nowrap;
+  text-shadow:-2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink), 2px 2px 0 var(--ink);
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.25), 0 6px 0 rgba(0,0,0,.45);
+  opacity:0; visibility:hidden; pointer-events:none; transform:translate(-50%, 18px);
+  transition:opacity .3s, transform .35s cubic-bezier(.3,1.5,.5,1), visibility 0s .35s}
+#square.resulted .next-btn, #square.over .next-btn{opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%, 0);
+  transition:opacity .3s .5s, transform .4s .5s cubic-bezier(.3,1.5,.5,1)}
+#square.over .next-btn{background:linear-gradient(180deg,#7fa6ff,#2f5fd8)}
+.stage.leaving .next-btn, .stage.menu .next-btn{opacity:0 !important; pointer-events:none !important}
+.next-btn:hover{filter:brightness(1.08)}
+.next-btn:active{transform:translate(-50%, 3px) !important}
+.next-btn:focus-visible{outline:5px solid #fff; outline-offset:3px}
 
 /* Carteles que siguen a cada Pokémon */
 .tags{left:0; top:0; width:1080px; height:818px; pointer-events:none; opacity:0; transition:opacity .3s}

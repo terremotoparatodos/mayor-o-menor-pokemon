@@ -17,6 +17,7 @@ function replay(el: Element, cls: string) {
 export interface ViewHandlers {
   onGuess(g: Guess): void;
   onMode(c: Category): void;
+  onNext(): void;
 }
 
 export type StageState = 'menu' | 'guess' | 'picked' | 'reveal' | 'leaving';
@@ -34,6 +35,7 @@ export class SquareView {
     for (const el of root.querySelectorAll<HTMLElement>('.mode-btn')) {
       el.addEventListener('click', () => h.onMode(el.dataset.mode as Category));
     }
+    $(root, '.next-btn').addEventListener('click', () => h.onNext());
   }
 
   /** Pantalla de inicio. */
@@ -180,6 +182,8 @@ export class SquareView {
     st.className = 'stamp outline-s';
     st.replaceChildren();
     this.root.classList.toggle('resulted', Boolean(s?.outcome) && s?.phase !== 'over');
+    // Botón para seguir dentro del cuadro (además de Enter y el panel).
+    if (s) $(this.root, '.next-btn .lbl').textContent = s.phase === 'over' ? 'VOLVER AL INICIO' : s.isLastRound ? 'VER PUNTAJE' : 'SIGUIENTE';
     this.root.classList.toggle('over', s?.phase === 'over');
     if (!s) return;
     const small = (t: string) => { const n = document.createElement('small'); n.textContent = t; return n; };

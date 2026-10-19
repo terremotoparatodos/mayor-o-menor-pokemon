@@ -31,7 +31,7 @@ export class Controller {
   constructor(square: HTMLElement, panelRoot: HTMLElement, seed: string | null, config: SessionConfig) {
     this.config = config;
     this.rng = seeded(seedFrom(seed));
-    this.view = new SquareView(square, { onGuess: (g) => this.guess(g), onMode: (c) => this.chooseMode(c) });
+    this.view = new SquareView(square, { onGuess: (g) => this.guess(g), onMode: (c) => this.chooseMode(c), onNext: () => this.next() });
     this.scene = new Comparison(square.querySelector('.scene')!, new LabelLayer(square.querySelector('.tags')!), (b) => this.beat(b));
     this.panel = new Panel(panelRoot, this);
     this.view.renderMenu();

@@ -5,7 +5,7 @@ Buscaminas / Letras (Bungee, contornos de tinta, fondo, paneles y panel de contr
 los recuadros de retrato de Mystery Dungeon, también la comparación a escala.
 
 Partida única con un solo puntaje: al iniciar se elige **ALTURA** o **PESO** y esa categoría vale para
-las 20 rondas. Al final se muestra el puntaje (por ejemplo 14/20) y Enter vuelve al inicio.
+las 20 rondas. Al final se muestra el puntaje (por ejemplo 14/20) y el botón o Enter vuelven al inicio.
 
 1. **Pregunta:** "¿QUIÉN ES MÁS ALTO?" o "¿QUIÉN ES MÁS PESADO?" con dos cartas con el **retrato de
    Mystery Dungeon** (PMDCollab/SpriteCollab). Los retratos son todos del mismo tamaño y ningún valor
@@ -17,7 +17,8 @@ las 20 rondas. Al final se muestra el puntaje (por ejemplo 14/20) y Enter vuelve
      de medición; una línea marca la altura del más bajo.
    - Peso: los dos recuadros están sobre un balancín que golpea hacia el más pesado.
 3. **Resultado:** el cartel reemplaza a la pregunta, destello verde o rojo en el borde y +1 en el
-   puntaje. La escena se va y se reparte la pareja siguiente (cada ronda es una pareja nueva).
+   puntaje. Abajo aparece el botón **SIGUIENTE** (en la última ronda, **VER PUNTAJE**; al final,
+   **VOLVER AL INICIO**): se sigue desde el propio juego, sin el panel. La escena se va y se reparte la pareja siguiente (cada ronda es una pareja nueva).
 
 ## Cuadro para edición
 
