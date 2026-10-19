@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.cache/
+# Extraídos localmente (npm run setup). Licencias propias: Cobblemon por modelo, SpriteCollab CC BY-NC 4.0.
+public/cobblemon/
+public/portraits/

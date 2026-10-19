@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!-- ═══════════════════════════════════════════════════════════════
+     ¿MAYOR O MENOR? POKÉMON · higher or lower de altura y peso
+     Reel 1920×1080 con el CUADRO de juego 1080×1080 centrado (para recortar en edición).
+     ?cuadro=1 → el reel es sólo el cuadro 1080×1080.
+     Teclas: ←/1 elige el de la izquierda · →/2 el de la derecha · Enter/Espacio continuar (o saltar)
+             N otra pareja · C cambiar categoría · A repetir animación · U deshacer
+             J cambiar turno · +/− punto al jugador del turno · M mute · R grabación 1:1
+             G guías · P panel
+     URL: ?seed=texto partida reproducible · ?nopanel=1 · ?clean=1 sin guías
+     ═══════════════════════════════════════════════════════════════ -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Mayor o Menor? Pokémon</title>
+</head>
+<body>
+
+<div id="reel">
+  <div class="side" id="side-l"><span>FUERA DE CUADRO</span></div>
+
+  <!-- ═════════ CUADRO 1080×1080 (lo único que importa en edición) ═════════ -->
+  <main id="square">
+    <header class="head">
+      <section class="player slab" data-p="0"><div class="pname outline-s"></div><div class="pscore outline-s">0</div><div class="turn">JUEGA</div></section>
+      <div class="title">
+        <div class="logo outline">¿MAYOR <span>O</span> MENOR?</div>
+        <div class="meta"><span class="round-no outline-s"></span><span class="chip cat"></span></div>
+      </div>
+      <section class="player slab" data-p="1"><div class="pname outline-s"></div><div class="pscore outline-s">0</div><div class="turn">JUEGA</div></section>
+    </header>
+    <div class="progress"></div>
+    <div class="question"><div class="q-text outline"></div></div>
+
+    <div class="stage">
+      <canvas class="scene" width="1080" height="818"></canvas>
+      <div class="tags"></div>
+
+      <div class="cards">
+        <article class="pcard slab" data-side="a">
+          <div class="pc-label">◀</div>
+          <div class="frame"><img alt="" draggable="false"></div>
+          <div class="pc-name outline"></div>
+          <div class="pc-value outline"></div>
+        </article>
+        <div class="vs outline">VS</div>
+        <article class="pcard slab" data-side="b">
+          <div class="pc-label">▶</div>
+          <div class="frame"><img alt="" draggable="false"></div>
+          <div class="pc-name outline"></div>
+          <div class="pc-value outline"></div>
+        </article>
+      </div>
+
+      <div class="choices">
+        <button class="choice pick-a" data-guess="a"><span class="arrow">◀</span><span class="lbl"></span></button>
+        <button class="choice pick-b" data-guess="b"><span class="lbl"></span><span class="arrow">▶</span></button>
+      </div>
+
+      <div class="said outline-s"></div>
+      <div class="stamp outline-s"></div>
+      <div class="loading outline-s">CARGANDO…</div>
+    </div>
+  </main>
+
+  <div class="side" id="side-r"><span>FUERA DE CUADRO</span></div>
+</div>
+
+<aside id="panel"></aside>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

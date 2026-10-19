@@ -1,0 +1,30 @@
+{
+  "name": "mayor-o-menor-pokemon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "¿Mayor o Menor? Pokémon — higher or lower de altura y peso: retratos de Mystery Dungeon y comparación a escala con modelos de Cobblemon",
+  "scripts": {
+    "models": "node scripts/extract-cobblemon.mjs",
+    "portraits": "node scripts/fetch-portraits.mjs",
+    "data": "node scripts/build-data.mjs",
+    "setup": "npm run models && npm run portraits && npm run data",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.170.0",
+    "typescript": "5.7.3",
+    "vite": "6.2.0",
+    "vitest": "3.0.9"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}
