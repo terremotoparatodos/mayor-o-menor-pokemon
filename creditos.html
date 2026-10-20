@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Créditos · ¿Mayor o Menor? Pokémon</title>
+</head>
+<body class="credits">
+<main class="cr">
+  <a class="back" href="./">◀ Volver al juego</a>
+  <h1>Créditos</h1>
+
+  <section>
+    <h2>Retratos de Mystery Dungeon</h2>
+    <p>Los retratos son del proyecto <a href="https://sprites.pmdcollab.org/" target="_blank" rel="noopener">PMDCollab</a>
+      (repositorio <a href="https://github.com/PMDCollab/SpriteCollab" target="_blank" rel="noopener">SpriteCollab</a>) y se
+      usan bajo la licencia <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.es" target="_blank" rel="noopener">CC BY-NC 4.0</a>
+      (<a href="portraits/LICENSE.txt">texto de la licencia del repositorio</a>): uso no comercial y con atribución. No se modificaron.</p>
+    <p>Los retratos marcados como CHUNSOFT son los originales de <i>Pokémon Mystery Dungeon</i> (Spike Chunsoft).</p>
+    <p>Abajo está el autor del retrato Normal vigente de cada Pokémon que aparece en el juego, según los créditos de SpriteCollab.</p>
+  </section>
+
+  <section>
+    <h2>Datos y recursos</h2>
+    <ul>
+      <li>Altura y peso: <a href="https://pokeapi.co/" target="_blank" rel="noopener">PokéAPI</a> y
+        <a href="https://github.com/smogon/pokemon-showdown" target="_blank" rel="noopener">Pokémon Showdown</a> (sólo entran las especies en las que coinciden).</li>
+      <li>Tipografías Bungee y Press Start 2P (SIL Open Font License).</li>
+      <li>Pokémon y sus nombres son marcas de Nintendo, Creatures, GAME FREAK y The Pokémon Company. Juego de fans, sin fines comerciales.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Autores por Pokémon <span class="count"></span></h2>
+    <input class="filter" type="search" placeholder="Buscar Pokémon o autor…" aria-label="Buscar Pokémon o autor">
+    <ol class="list"></ol>
+  </section>
+</main>
+<script type="module" src="/src/credits.ts"></script>
+</body>
+</html>

@@ -31,7 +31,8 @@ export class Panel {
         'Inicio: ', kbd('←'), ' altura · ', kbd('→'), ' peso. Juego: ', kbd('←'), ' / ', kbd('→'), ' elegir · ',
         kbd('Enter'), ' continuar/saltar · ', kbd('N'), ' otra pareja · ', kbd('A'), ' repetir · ',
         kbd('U'), ' deshacer · ', kbd('+/−'), ' puntaje · ', kbd('Esc'), ' inicio · ',
-        kbd('R'), ' 1:1 · ', kbd('G'), ' guías · ', kbd('M'), ' mute'),
+        kbd('R'), ' 1:1 · ', kbd('G'), ' guías · ', kbd('M'), ' mute · ',
+        h('a', { href: 'creditos.html', target: '_blank', textContent: 'Créditos de los retratos' })),
     );
   }
 

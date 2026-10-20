@@ -171,6 +171,10 @@ body.clean #square::after{display:none}
 @keyframes menuIn{from{opacity:0; transform:translateY(40px) scale(.9)}}
 .stage.menu-out .mode-btn.chosen{transform:scale(1.06); box-shadow:inset 0 0 0 2px rgba(255,255,255,.2), 0 0 0 8px var(--c), 0 0 60px var(--c)}
 .stage.menu-out .mode-btn.dropped{opacity:0; transform:scale(.88) translateY(20px)}
+/* Atribución de los retratos (CC BY-NC 4.0), visible en el inicio. */
+.credit-note{position:absolute; left:0; right:0; bottom:-56px; margin:0; text-align:center; font:600 17px/1.3 system-ui,sans-serif;
+  color:rgba(255,255,255,.75); text-shadow:0 2px 0 rgba(0,0,0,.6)}
+.credit-note a{color:#cfe0ff}
 
 /* Cartas con retrato de Mystery Dungeon: todas iguales de tamaño → no se puede medir a ojo. */
 .cards{left:56px; right:56px; top:18px; height:560px; display:grid; grid-template-columns:1fr 92px 1fr; align-items:center;

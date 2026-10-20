@@ -21,6 +21,10 @@ las 20 rondas. Al final se muestra el puntaje (por ejemplo 14/20) y el botón o 
    puntaje. Abajo aparece el botón **SIGUIENTE** (en la última ronda, **VER PUNTAJE**; al final,
    **VOLVER AL INICIO**): se sigue desde el propio juego, sin el panel. La escena se va y se reparte la pareja siguiente (cada ronda es una pareja nueva).
 
+**Jugar:** https://terremotoparatodos.github.io/mayor-o-menor-pokemon/ ·
+[solo el cuadro](https://terremotoparatodos.github.io/mayor-o-menor-pokemon/?cuadro=1) ·
+[créditos](https://terremotoparatodos.github.io/mayor-o-menor-pokemon/creditos.html)
+
 ## Cuadro para edición
 
 El reel es 1920×1080 con el **cuadro de juego 1080×1080 centrado**: todo lo que importa está adentro
@@ -39,6 +43,14 @@ npm run dev     # http://localhost:5330/
   `.cache/` y copia los retratos a `public/portraits/` (gitignored, CC BY-NC 4.0).
 - `npm run data` cruza altura y peso de **PokéAPI** y **Pokémon Showdown**; si no coinciden exactamente la
   especie queda afuera. Resultado: `src/content/pokedex.json` (1021 especies hoy; Minior, Maushold, Dipplin y Okidogi quedan afuera).
+
+## Publicación y créditos
+
+GitHub Pages se publica con `.github/workflows/pages.yml` en cada push a `master`. Los retratos no están en el
+repo: el workflow los baja de SpriteCollab (`npm run portraits`) y viajan sólo dentro del sitio. El mismo
+script genera `public/portraits/credits.json` (autor del retrato Normal vigente de cada especie, según
+`credits.txt` y `credit_names.txt` de SpriteCollab), que muestra `creditos.html`. El inicio del juego y el
+panel enlazan a esa página. El build usa base relativa, así que sirve igual en localhost y en Pages.
 
 URL: `?seed=texto` partida reproducible · `?modo=altura` / `?modo=peso` saltea el inicio · `?rondas=20` ·
 `?cuadro=1` · `?nopanel=1` · `?clean=1` sin guías.
@@ -66,5 +78,6 @@ src/game/     dominio sin DOM: rondas, sesión (puntaje único, rondas, deshacer
 src/render/   comparison (recuadros PMD, línea de tiempo pura de t) · labels (carteles HTML)
 src/ui/       squareView (cuadro) · panel · styles.css
 src/app/      controller (sesión ↔ vista ↔ comparación ↔ sonido) · src/input/keys.ts
-scripts/      fetch-portraits · build-data
+scripts/      fetch-portraits (retratos + créditos) · build-data
+creditos.html · src/credits.ts  página de créditos
 ```
