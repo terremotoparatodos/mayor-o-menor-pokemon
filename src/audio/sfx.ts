@@ -100,6 +100,11 @@ export class Sfx {
     this.tone('sine', 180, 60, 0.2, 0.5, delay);
     this.noise(0.08, 0.3, 'lowpass', 1200, 1, delay);
   }
+  /** Silbido de algo que sale volando. */
+  launch() {
+    this.tone('square', 300, 1400, 0.35, 0.1);
+    this.noise(0.5, 0.25, 'highpass', 1200, 0.7);
+  }
   correct() { this.wav('correct', 0.9); }
   wrong() { this.wav('bomb', 0.7); }
   nextRound() { this.wav('next-round', 0.6); }

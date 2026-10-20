@@ -215,6 +215,7 @@ export class Controller {
   /** Sonidos y sacudón en los momentos clave de la animación. */
   private beat(b: Beat) {
     if (b === 'land') { this.sfx.thud(); return; }
+    if (b === 'launch') { this.sfx.launch(); return; }
     // Salto a escala real: golpe fuerte y sacudón.
     this.sfx.thud();
     this.sfx.morph(0, 0.25);

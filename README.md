@@ -15,7 +15,8 @@ las 20 rondas. Al final se muestra el puntaje (por ejemplo 14/20) y el botón o 
    cambian de tamaño, porque eso adelantaría la respuesta.
    - Altura: cada recuadro sale disparado sobre una columna proporcional a sus metros, contra una pared
      de medición; una línea marca la altura del más bajo.
-   - Peso: los dos recuadros están sobre un balancín que golpea hacia el más pesado.
+   - Peso: el más pesado golpea el balancín y el liviano sale volando del cuadro; su cartel de peso
+     queda donde estaba.
 3. **Resultado:** el cartel reemplaza a la pregunta, destello verde o rojo en el borde y +1 en el
    puntaje. Abajo aparece el botón **SIGUIENTE** (en la última ronda, **VER PUNTAJE**; al final,
    **VOLVER AL INICIO**): se sigue desde el propio juego, sin el panel. La escena se va y se reparte la pareja siguiente (cada ronda es una pareja nueva).

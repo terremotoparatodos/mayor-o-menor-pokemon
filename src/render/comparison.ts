@@ -2,7 +2,7 @@
 // Los recuadros salen de las cartas, caen al escenario y aguantan el suspenso. Nunca cambian de tamaño
 // (eso adelantaría la respuesta): todo se define de golpe en un solo instante.
 //   altura → cada recuadro sale disparado sobre una columna ∝ metros, contra una pared de medición;
-//   peso   → el balancín golpea hacia el más pesado.
+//   peso   → el más pesado golpea el balancín y el liviano sale volando; su cartel queda donde estaba.
 // La línea de tiempo es una función pura de t: saltar al final o repetir es exacto.
 import { formatValue } from '../game/format';
 import type { Round } from '../game/types';
@@ -25,7 +25,7 @@ export const TIMELINE = {
   weight: { tiltDur: 1.0, end: 3.6 },
 };
 
-export type Beat = 'land' | 'snap';
+export type Beat = 'land' | 'snap' | 'launch';
 
 const W = 1080;
 const FLOOR = 728;
@@ -36,6 +36,10 @@ const MAX_COLUMN = 360;
 const GAP = 150;
 const PIVOT = { x: W / 2, y: 610 };
 const BEAM = { half: 470, thick: 22, arm: 290 };
+/** Inclinación del balancín cuando el liviano ya salió volando (rad). */
+const SLAM_ANGLE = 0.22;
+/** Catapulta: el liviano sale despedido un instante después del golpe. */
+const LAUNCH = { delay: 0.12, vx: 950, vy: 1500, gravity: 2600, spin: 7 };
 
 interface Rect { x: number; y: number; size: number }
 
@@ -47,13 +51,17 @@ export class Comparison {
   private wall: HTMLElement;
   private refLine: HTMLElement;
   private beam: HTMLElement;
+  /** Ronda que se está mostrando. */
   private round: Round | null = null;
+  /** Ronda ya cargada que reemplaza a la mostrada recién al reproducirse (la escena vieja no cambia al salir). */
+  private pending: { round: Round; urls: string[] } | null = null;
   private from: [Rect, Rect] = [{ x: 280, y: 330, size: BOX }, { x: 800, y: 330, size: BOX }];
   private t = 0;
   private playing = false;
   private silent = false;
   private onDone: (() => void) | null = null;
   private token = 0;
+  private launched: { side: number; at: { x: number; y: number }; rot: number } | null = null;
 
   constructor(readonly root: HTMLElement, private labels: LabelLayer, private onBeat: (b: Beat) => void) {
     const el = (cls: string, html = '') => {
@@ -72,20 +80,29 @@ export class Comparison {
     root.append(el('cmp-floor'));
   }
 
-  get preparedFor() { return this.round; }
+  get preparedFor() { return this.pending?.round ?? this.round; }
 
   /** Carga los dos retratos de la ronda (rechaza si falta alguno). */
   async prepare(round: Round): Promise<void> {
     const token = ++this.token;
-    const imgs = this.boxes.map((b) => b.querySelector('img')!);
     const urls = [round.a, round.b].map((s) => `${import.meta.env.BASE_URL}portraits/${s.dex}.png`);
     await Promise.all(urls.map((u) => { const i = new Image(); i.src = u; return i.decode(); }));
     if (token !== this.token) return;
-    imgs.forEach((img, i) => { img.src = urls[i]; img.alt = i === 0 ? round.a.name : round.b.name; });
-    this.round = round;
+    this.pending = { round, urls };
+  }
+
+  /** Pasa la ronda cargada a la escena (retratos y pared). */
+  private applyPending() {
+    const p = this.pending;
+    if (!p) return;
+    this.pending = null;
+    this.boxes.forEach((b, i) => {
+      const img = b.querySelector('img')!;
+      img.src = p.urls[i];
+      img.alt = i === 0 ? p.round.a.name : p.round.b.name;
+    });
+    this.round = p.round;
     this.buildWall();
-    this.t = 0;
-    this.playing = false;
   }
 
   /** Dónde estaban los recuadros en las cartas (coordenadas del escenario), para salir desde ahí. */
@@ -110,6 +127,7 @@ export class Comparison {
   }
 
   private start(t: number, onDone: (() => void) | null, silent: boolean) {
+    this.applyPending();
     if (!this.round) return;
     this.t = t;
     this.silent = silent;
@@ -140,7 +158,9 @@ export class Comparison {
 
   /** Momentos con sonido/sacudón: el aterrizaje y el salto a escala real. */
   private beats(): [number, Beat][] {
-    return [[TIMELINE.drop, 'land'], [TIMELINE.snap, 'snap']];
+    const list: [number, Beat][] = [[TIMELINE.drop, 'land'], [TIMELINE.snap, 'snap']];
+    if (this.round?.category === 'weight') list.push([TIMELINE.snap + LAUNCH.delay, 'launch']);
+    return list;
   }
 
   private buildWall() {
@@ -206,20 +226,36 @@ export class Comparison {
       this.labels.setProgress(count, count);
     } else {
       const tilt = span(t, T.snap, T.weight.tiltDur);
-      // Muelle duro: el balancín golpea hacia el más pesado, se pasa y se asienta rápido.
+      // Muelle duro: el balancín golpea del lado del más pesado, se pasa y se asienta rápido.
       const spring = tilt > 0 ? 1 - Math.exp(-6 * tilt) * Math.cos(13 * tilt) : 0;
-      const wr = Math.log10(r.b.weight / r.a.weight);
-      const ang = Math.sign(wr) * Math.min(0.2, 0.07 + 0.09 * Math.abs(wr)) * spring;
-      const onBeam = (lx: number) => ({
+      const heavy = r.b.weight > r.a.weight ? 1 : 0;
+      const target = heavy === 1 ? SLAM_ANGLE : -SLAM_ANGLE;
+      const onBeamAt = (ang: number, lx: number) => ({
         x: PIVOT.x + lx * Math.cos(ang) + (BEAM.thick / 2) * Math.sin(ang),
         y: PIVOT.y + lx * Math.sin(ang) - (BEAM.thick / 2) * Math.cos(ang),
       });
-      const pA = this.dropPose(0, drop, onBeam(-BEAM.arm), BOX, land, hit);
-      const pB = this.dropPose(1, drop, onBeam(BEAM.arm), BOX, land, hit);
-      pA.x += jitter(0);
-      pB.x += jitter(1);
-      pA.rot = pB.rot = ang;
-      poses = [pA, pB];
+      const ang = target * spring;
+      const arm = [-BEAM.arm, BEAM.arm];
+      poses = [0, 1].map((i) => {
+        const p = this.dropPose(i, drop, onBeamAt(ang, arm[i]), BOX, land, hit);
+        p.x += jitter(i);
+        p.rot = ang;
+        return p;
+      }) as [Pose, Pose];
+      // El liviano sale despedido hacia afuera y arriba, girando, hasta salir del cuadro.
+      const light = 1 - heavy;
+      const tl = T.snap + LAUNCH.delay;
+      const angAtLaunch = target * (1 - Math.exp(-6 * (LAUNCH.delay / T.weight.tiltDur)) * Math.cos(13 * (LAUNCH.delay / T.weight.tiltDur)));
+      if (t > tl) {
+        const dt = t - tl;
+        const dir = light === 0 ? -1 : 1;
+        const p0 = onBeamAt(angAtLaunch, arm[light]);
+        poses[light] = { ...poses[light], sx: 1, sy: 1,
+          x: p0.x + dir * LAUNCH.vx * dt,
+          y: p0.y - LAUNCH.vy * dt + 0.5 * LAUNCH.gravity * dt * dt,
+          rot: angAtLaunch + dir * LAUNCH.spin * dt };
+      }
+      this.launched = t > tl ? { side: light, at: onBeamAt(target, arm[light]), rot: target } : null;
       this.beam.style.transform = `translate(${PIVOT.x - BEAM.half}px, ${PIVOT.y - BEAM.thick / 2}px) rotate(${ang}rad)`;
       const count = easeOut(span(t, T.snap + 0.05, 0.4));
       this.labels.setProgress(count, count);
@@ -232,6 +268,9 @@ export class Comparison {
     });
     // Carteles sobre el borde superior de cada recuadro (girado con el balancín).
     const tops = poses.map((p) => ({ x: p.x + Math.sin(p.rot) * p.size * p.sy, y: p.y - Math.cos(p.rot) * p.size * p.sy - 12 }));
+    // El cartel del que salió volando queda donde estaba su recuadro.
+    const gone = r.category === 'weight' ? this.launched : null;
+    if (gone) tops[gone.side] = { x: gone.at.x + Math.sin(gone.rot) * BOX, y: gone.at.y - Math.cos(gone.rot) * BOX - 12 };
     this.labels.place(tops[0], tops[1]);
   }
 
